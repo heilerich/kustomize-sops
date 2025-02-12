@@ -1,0 +1,6 @@
+creation_rules:
+  - path_regex: .+\.enc\.yaml$
+    encrypted_regex: '^(data|stringData|password|auth)$'
+    # Felix Heilmeyer: age189hga9xeu384ms5tqusupk06dmufr43msrww4pev0eju38a3x9qs4ptvpv
+    age: >-
+      age189hga9xeu384ms5tqusupk06dmufr43msrww4pev0eju38a3x9qs4ptvpv

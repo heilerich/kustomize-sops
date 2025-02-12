@@ -1,0 +1,33 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  test:encrypt:
+    dir: ./test
+    cmds:
+      - sops --config sops-config.yaml -e -i secret.enc.yaml
+
+  test:decrypt:
+    dir: ./test
+    cmds:
+      - sops --config sops-config.yaml -d -i secret.enc.yaml
+
+  test:
+    cmds:
+      - task: test:encrypt
+      - defer: { task: test:decrypt }
+      - a=`mktemp`; b=`mktemp`; (kustomize build -o $a test && go run . build -o $b test); (diff $a $b || true); rm $a $b
+
+  build:
+    vars:
+      GIT_COMMIT:
+        sh: git log -n 1 --format=%h
+      DATE:
+        sh: date -u +'%Y-%m-%dT%H:%M:%SZ'
+    cmds:
+      - >-
+        go build -ldflags "-s -w
+          -X sigs.k8s.io/kustomize/api/provenance.version=v5.6.0
+          -X sigs.k8s.io/kustomize/api/provenance.gitCommit={{.GIT_COMMIT}}
+          -X sigs.k8s.io/kustomize/api/provenance.buildDate={{.DATE}}" .
