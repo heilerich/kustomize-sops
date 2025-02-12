@@ -1,0 +1,41 @@
+diff --git a/yaml.go b/yaml.go
+index fc10246..336610f 100644
+--- a/yaml.go
++++ b/yaml.go
+@@ -19,11 +19,15 @@ package yaml
+ import (
+ 	"bytes"
+ 	"encoding/json"
++	"errors"
+ 	"fmt"
+ 	"io"
+ 	"reflect"
+ 	"strconv"
++	"strings"
+ 
++	"github.com/getsops/sops/v3"
++	"github.com/getsops/sops/v3/decrypt"
+ 	"sigs.k8s.io/yaml/goyaml.v2"
+ )
+ 
+@@ -144,7 +148,19 @@ func JSONToYAML(j []byte) ([]byte, error) {
+ // - Unlike Unmarshal, all integers, up to 64 bits, are preserved during this round-trip.
+ // - There are no compatibility guarantees for returned error values.
+ func YAMLToJSON(y []byte) ([]byte, error) {
+-	return yamlToJSONTarget(y, nil, yaml.Unmarshal)
++	cleartext, err := decrypt.Data(y, "binary")
++	if err != nil && strings.HasPrefix(err.Error(), "Error unmarshalling input json") {
++		cleartext, err = decrypt.Data(y, "yaml")
++	}
++	if err != nil {
++		if errors.Is(err, sops.MetadataNotFound) || strings.HasSuffix(err.Error(), "into stores.SopsFile") {
++			return yamlToJSONTarget(y, nil, yaml.Unmarshal)
++		}
++		wrappedErr := fmt.Errorf("failed to decrypt sops file: %w", err)
++		println("SOPS error: ", wrappedErr.Error())
++		return nil, wrappedErr
++	}
++	return yamlToJSONTarget(cleartext, nil, yaml.Unmarshal)
+ }
+ 
+ // YAMLToJSONStrict is like YAMLToJSON but enables strict YAML decoding,

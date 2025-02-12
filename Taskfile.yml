@@ -19,6 +19,17 @@ tasks:
       - defer: { task: test:decrypt }
       - a=`mktemp`; b=`mktemp`; (kustomize build -o $a test && go run . build -o $b test); (diff $a $b || true); rm $a $b
 
+  .patch:
+    internal: true
+    dir: ./yaml
+    cmds:
+      - git apply ../yaml-patch.patch
+  .unpatch:
+    internal: true
+    dir: ./yaml
+    cmds:
+      - git restore .
+
   .build:
     internal: true
     vars:
@@ -29,6 +40,8 @@ tasks:
     requires:
       vars: ["CMD"]
     cmds:
+      - task: .patch
+      - defer: { task: .unpatch }
       - >-
         go {{.CMD}} -ldflags "-s -w
           -X sigs.k8s.io/kustomize/api/provenance.version=v5.6.0
