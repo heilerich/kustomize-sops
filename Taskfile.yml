@@ -19,15 +19,30 @@ tasks:
       - defer: { task: test:decrypt }
       - a=`mktemp`; b=`mktemp`; (kustomize build -o $a test && go run . build -o $b test); (diff $a $b || true); rm $a $b
 
-  build:
+  .build:
+    internal: true
     vars:
       GIT_COMMIT:
         sh: git log -n 1 --format=%h
       DATE:
         sh: date -u +'%Y-%m-%dT%H:%M:%SZ'
+    requires:
+      vars: ["CMD"]
     cmds:
       - >-
-        go build -ldflags "-s -w
+        go {{.CMD}} -ldflags "-s -w
           -X sigs.k8s.io/kustomize/api/provenance.version=v5.6.0
           -X sigs.k8s.io/kustomize/api/provenance.gitCommit={{.GIT_COMMIT}}
           -X sigs.k8s.io/kustomize/api/provenance.buildDate={{.DATE}}" .
+
+  build:
+    cmds:
+      - task: .build
+        vars:
+          CMD: build
+
+  install:
+    cmds:
+      - task: .build
+        vars:
+          CMD: install
