@@ -43,11 +43,10 @@ tasks:
       - task: .patch
       - defer: { task: .unpatch }
       - >-
-        go {{.CMD}} -ldflags "-s -w
+        go {{.CMD}} -o kustomize-sops -ldflags "-s -w
           -X sigs.k8s.io/kustomize/api/provenance.version=v5.6.0
           -X sigs.k8s.io/kustomize/api/provenance.gitCommit={{.GIT_COMMIT}}
-          -X sigs.k8s.io/kustomize/api/provenance.buildDate={{.DATE}}"
-          -o kustomize-sops .
+          -X sigs.k8s.io/kustomize/api/provenance.buildDate={{.DATE}}" .
 
   build:
     cmds:
