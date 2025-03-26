@@ -17,7 +17,7 @@ tasks:
     cmds:
       - task: test:encrypt
       - defer: { task: test:decrypt }
-      - a=`mktemp`; b=`mktemp`; (kustomize build -o $a test && go run . build -o $b test); (diff $a $b || true); rm $a $b
+      - a=`mktemp`; b=`mktemp`; (./kustomize-sops build -o $a test && go run . build -o $b test); (diff $a $b || true); rm $a $b
 
   .patch:
     internal: true
@@ -46,7 +46,8 @@ tasks:
         go {{.CMD}} -ldflags "-s -w
           -X sigs.k8s.io/kustomize/api/provenance.version=v5.6.0
           -X sigs.k8s.io/kustomize/api/provenance.gitCommit={{.GIT_COMMIT}}
-          -X sigs.k8s.io/kustomize/api/provenance.buildDate={{.DATE}}" .
+          -X sigs.k8s.io/kustomize/api/provenance.buildDate={{.DATE}}"
+          -o kustomize-sops .
 
   build:
     cmds:
