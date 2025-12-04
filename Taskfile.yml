@@ -1,35 +1,29 @@
 # https://taskfile.dev
-
 version: '3'
-
 tasks:
   test:encrypt:
     dir: ./test
     cmds:
-      - sops --config sops-config.yaml -e -i secret.enc.yaml
-
+    - sops --config sops-config.yaml -e -i secret.enc.yaml
   test:decrypt:
     dir: ./test
     cmds:
-      - sops --config sops-config.yaml -d -i secret.enc.yaml
-
+    - sops --config sops-config.yaml -d -i secret.enc.yaml
   test:
     cmds:
-      - task: test:encrypt
-      - defer: { task: test:decrypt }
-      - a=`mktemp`; b=`mktemp`; (./kustomize-sops build -o $a test && go run . build -o $b test); (diff $a $b || true); rm $a $b
-
+    - task: test:encrypt
+    - defer: {task: 'test:decrypt'}
+    - a=`mktemp`; b=`mktemp`; (./kustomize-sops build -o $a test && go run . build -o $b test); (diff $a $b || true); rm $a $b
   .patch:
     internal: true
     dir: ./yaml
     cmds:
-      - git apply ../yaml-patch.patch
+    - git apply ../yaml-patch.patch
   .unpatch:
     internal: true
     dir: ./yaml
     cmds:
-      - git restore .
-
+    - git restore .
   .build:
     internal: true
     vars:
@@ -40,22 +34,25 @@ tasks:
     requires:
       vars: ["CMD"]
     cmds:
-      - task: .patch
-      - defer: { task: .unpatch }
-      - >-
-        go {{.CMD}} -o kustomize-sops -ldflags "-s -w
-          -X sigs.k8s.io/kustomize/api/provenance.version=v5.6.0
-          -X sigs.k8s.io/kustomize/api/provenance.gitCommit={{.GIT_COMMIT}}
-          -X sigs.k8s.io/kustomize/api/provenance.buildDate={{.DATE}}" .
+    - task: .patch
+    - defer: {task: .unpatch}
+    - >-
+      go {{.CMD}} -ldflags "-s -w
 
+       -X sigs.k8s.io/kustomize/api/provenance.version=v5.8.0
+       -X sigs.k8s.io/kustomize/api/provenance.gitCommit={{.GIT_COMMIT}}
+       -X sigs.k8s.io/kustomize/api/provenance.buildDate={{.DATE}}" .
   build:
     cmds:
-      - task: .build
-        vars:
-          CMD: build
-
+    - task: .build
+      vars:
+        CMD: build -o kustomize-sops
+  update:
+    cmds:
+    - go get -u ./...
+    - go mod tidy
   install:
     cmds:
-      - task: .build
-        vars:
-          CMD: install
+    - task: .build
+      vars:
+        CMD: install

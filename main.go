@@ -9,9 +9,9 @@ import (
 
 	"github.com/getsops/sops/v3"
 	"github.com/getsops/sops/v3/decrypt"
+	yaml "go.yaml.in/yaml/v3"
 	"sigs.k8s.io/kustomize/kustomize/v5/commands"
 	kyaml "sigs.k8s.io/kustomize/kyaml/yaml"
-	yaml "sigs.k8s.io/yaml/goyaml.v3"
 )
 
 type errorReader struct{ error }
